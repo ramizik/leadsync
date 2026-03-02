@@ -92,10 +92,3 @@ WF3_SLACK_TOOLS: list[str] = [
     "SLACK_SEND_MESSAGE",
 ]
 
-# ---------------------------------------------------------------------------
-# GOOGLEDOCS tools (used pre-crew for preference loading)
-# ---------------------------------------------------------------------------
-GOOGLEDOCS_PREFS_TOOLS: list[str] = [
-    "GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT",
-    "GOOGLEDOCS_GET_DOCUMENT_BY_ID",
-]
