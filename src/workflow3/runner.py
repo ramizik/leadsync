@@ -104,7 +104,7 @@ def run_workflow3(
                 label=context.primary_label or None,
                 component=context.primary_component or None,
                 summary=answer_text or "No answer captured.",
-                rules_applied=f"googledocs-{context.preference_category} + same-label-history",
+                rules_applied=f"local-config-{context.preference_category} + same-label-history",
                 context={"question": question, "thread_ts": thread_ts, "channel_id": slack_channel_id},
             )
     except Exception:
