@@ -32,7 +32,7 @@ from src.shared import (
     memory_enabled,
 )
 from src.tools.jira_tools import get_agent_tools
-from src.tools.tool_registry import GOOGLEDOCS_PREFS_TOOLS, WF1_GITHUB_TOOLS
+from src.tools.tool_registry import WF1_GITHUB_TOOLS
 from src.workflow1.prompt_artifact import (
     REQUIRED_SECTIONS,
     has_required_sections as _has_required_sections,
@@ -85,7 +85,6 @@ def run_leadsync_crew(payload: dict[str, Any]) -> CrewRunResult:
     user_id = composio_user_id()
     github_tools = build_tools(user_id=user_id, tools=WF1_GITHUB_TOOLS)
     tools = _merge_tools(jira_tools, github_tools)
-    docs_tools = build_tools(user_id=user_id, tools=GOOGLEDOCS_PREFS_TOOLS)
     repo_owner = _required_env("LEADSYNC_GITHUB_REPO_OWNER")
     repo_name = _required_env("LEADSYNC_GITHUB_REPO_NAME")
     runtime = Workflow1Runtime(
@@ -106,7 +105,6 @@ def run_leadsync_crew(payload: dict[str, Any]) -> CrewRunResult:
         payload=payload,
         model=model,
         tools=tools,
-        docs_tools=docs_tools,
         runtime=runtime,
         logger=logger,
         repo_owner=repo_owner,
