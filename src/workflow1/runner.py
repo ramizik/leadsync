@@ -30,7 +30,7 @@ class Workflow1Runtime:
     Crew: Any
     Process: Any
     resolve_preference_category: Callable[[list[str], list[str]], str]
-    load_preferences_for_category: Callable[[str, list[Any]], str]
+    load_preferences_for_category: Callable[[str], str]
     build_same_label_progress_context: Callable[..., str]
     upload_prompt_to_jira: Callable[[list[Any], str, str], Path]
     memory_enabled: Callable[[], bool]
@@ -57,7 +57,6 @@ def run_workflow1(
     payload: dict[str, Any],
     model: str,
     tools: list[Any],
-    docs_tools: list[Any],
     runtime: Workflow1Runtime,
     logger: logging.Logger,
     repo_owner: str,
@@ -77,7 +76,7 @@ def run_workflow1(
         has_github_tools=has_github_tools,
     )
     preference_category = runtime.resolve_preference_category(issue.labels, issue.component_names)
-    team_preferences = runtime.load_preferences_for_category(preference_category, docs_tools)
+    team_preferences = runtime.load_preferences_for_category(preference_category)
     same_label_history = runtime.build_same_label_progress_context(
         tools=tools,
         project_key=issue.project_key,

@@ -25,9 +25,8 @@ def resolve_workflow3_context(
     *,
     ticket_key: str,
     jira_tools: list[Any],
-    docs_tools: list[Any],
     resolve_preference_category: Callable[[list[str], list[str]], str],
-    load_preferences_for_category: Callable[[str, list[Any]], str],
+    load_preferences_for_category: Callable[[str], str],
     load_issue_project_label_component: Callable[[list[Any], str], tuple[str, str, str]],
     build_same_label_progress_context: Callable[..., str],
     memory_enabled: Callable[[], bool],
@@ -42,7 +41,7 @@ def resolve_workflow3_context(
         labels=[primary_label] if primary_label else [],
         component_names=[primary_component] if primary_component else [],
     )
-    team_preferences = load_preferences_for_category(preference_category, docs_tools)
+    team_preferences = load_preferences_for_category(preference_category)
     same_label_history = build_same_label_progress_context(
         tools=jira_tools,
         project_key=project_key,

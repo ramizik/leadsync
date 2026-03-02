@@ -21,7 +21,7 @@ class Workflow3Runtime:
     Process: Any
     load_issue_project_label_component: Callable[[list[Any], str], tuple[str, str, str]]
     resolve_preference_category: Callable[[list[str], list[str]], str]
-    load_preferences_for_category: Callable[[str, list[Any]], str]
+    load_preferences_for_category: Callable[[str], str]
     build_same_label_progress_context: Callable[..., str]
     memory_enabled: Callable[[], bool]
     build_memory_db_path: Callable[[], str]
@@ -38,7 +38,6 @@ def run_workflow3(
     thread_ts: str | None,
     slack_channel_id: str,
     jira_tools: list[Any],
-    docs_tools: list[Any],
     slack_tools: list[Any],
     runtime: Workflow3Runtime,
     logger: logging.Logger,
@@ -47,7 +46,6 @@ def run_workflow3(
     context = resolve_workflow3_context(
         ticket_key=ticket_key,
         jira_tools=jira_tools,
-        docs_tools=docs_tools,
         resolve_preference_category=runtime.resolve_preference_category,
         load_preferences_for_category=runtime.load_preferences_for_category,
         load_issue_project_label_component=runtime.load_issue_project_label_component,

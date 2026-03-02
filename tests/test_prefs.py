@@ -1,10 +1,9 @@
 """
 tests/test_prefs.py
-Unit tests for src/prefs.py — Google Docs-backed team preferences.
+Unit tests for src/prefs.py — local-file-backed team preferences.
 """
 
 import pytest
-from unittest.mock import MagicMock
 
 
 def test_resolve_preference_category_frontend_from_label():
@@ -28,57 +27,64 @@ def test_resolve_preference_category_defaults_to_backend():
     assert category == "backend"
 
 
-def test_resolve_doc_id_uses_required_env(monkeypatch):
-    from src.prefs import resolve_doc_id
+def test_load_preferences_for_category_returns_string(tmp_path, monkeypatch):
+    """load_preferences_for_category reads from the config/ directory and returns text."""
+    import src.common.prefs_core as prefs_core
 
-    monkeypatch.setenv("LEADSYNC_BACKEND_PREFS_DOC_ID", "doc-123")
-    assert resolve_doc_id("backend") == "doc-123"
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    (config_dir / "backend-ruleset.md").write_text("Keep APIs thin.\nPrefer REST.", encoding="utf-8")
 
+    monkeypatch.setattr(prefs_core, "_config_root", lambda: config_dir)
 
-def test_resolve_doc_id_raises_for_missing_env(monkeypatch):
-    from src.prefs import resolve_doc_id
-
-    monkeypatch.delenv("LEADSYNC_FRONTEND_PREFS_DOC_ID", raising=False)
-    with pytest.raises(RuntimeError, match="LEADSYNC_FRONTEND_PREFS_DOC_ID"):
-        resolve_doc_id("frontend")
-
-
-def test_load_preferences_for_category_reads_google_doc_plaintext(monkeypatch):
     from src.prefs import load_preferences_for_category
 
-    monkeypatch.setenv("LEADSYNC_DATABASE_PREFS_DOC_ID", "db-doc-1")
-    tool = MagicMock()
-    tool.name = "GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT"
-    tool.run.return_value = {"plain_text": "Prefer additive migrations.\nAlways write rollback."}
-
-    result = load_preferences_for_category(category="database", docs_tools=[tool])
-
-    tool.run.assert_called_once_with(document_id="db-doc-1")
-    assert "Prefer additive migrations" in result
+    result = load_preferences_for_category("backend")
+    assert "Keep APIs thin" in result
 
 
-def test_load_preferences_for_category_raises_when_tool_missing(monkeypatch):
+def test_load_preferences_for_category_raises_for_unknown_category():
     from src.prefs import load_preferences_for_category
 
-    monkeypatch.setenv("LEADSYNC_BACKEND_PREFS_DOC_ID", "be-doc-1")
-    with pytest.raises(RuntimeError, match="GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT"):
-        load_preferences_for_category(category="backend", docs_tools=[])
+    with pytest.raises(RuntimeError, match="Unknown preference category"):
+        load_preferences_for_category("unknown")
 
 
-def test_load_preferences_for_category_raises_on_empty_doc_text(monkeypatch):
+def test_load_preferences_for_category_raises_when_file_missing(tmp_path, monkeypatch):
+    import src.common.prefs_core as prefs_core
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    monkeypatch.setattr(prefs_core, "_config_root", lambda: config_dir)
+
     from src.prefs import load_preferences_for_category
 
-    monkeypatch.setenv("LEADSYNC_FRONTEND_PREFS_DOC_ID", "fe-doc-1")
-    tool = MagicMock()
-    tool.name = "GOOGLEDOCS_GET_DOCUMENT_PLAINTEXT"
-    tool.run.return_value = {"plain_text": "   "}
+    with pytest.raises(RuntimeError, match="not found"):
+        load_preferences_for_category("frontend")
+
+
+def test_load_preferences_for_category_raises_when_file_empty(tmp_path, monkeypatch):
+    import src.common.prefs_core as prefs_core
+
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    (config_dir / "database-ruleset.md").write_text("   ", encoding="utf-8")
+    monkeypatch.setattr(prefs_core, "_config_root", lambda: config_dir)
+
+    from src.prefs import load_preferences_for_category
 
     with pytest.raises(RuntimeError, match="empty"):
-        load_preferences_for_category(category="frontend", docs_tools=[tool])
+        load_preferences_for_category("database")
 
 
-def test_append_preference_is_deprecated():
-    from src.prefs import append_preference
+def test_prefs_exports_expected_symbols():
+    """Verify __all__ exports the correct set of symbols."""
+    import src.prefs as prefs_mod
 
-    with pytest.raises(RuntimeError, match="deprecated"):
-        append_preference("any")
+    assert "PREF_CATEGORY_FRONTEND" in dir(prefs_mod)
+    assert "PREF_CATEGORY_BACKEND" in dir(prefs_mod)
+    assert "PREF_CATEGORY_DATABASE" in dir(prefs_mod)
+    assert "resolve_preference_category" in dir(prefs_mod)
+    assert "load_preferences_for_category" in dir(prefs_mod)
+    assert not hasattr(prefs_mod, "resolve_doc_id")
+    assert not hasattr(prefs_mod, "append_preference")
