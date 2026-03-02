@@ -1,5 +1,5 @@
 # LeadSync — Claude Code Agent Instructions
-> Read this entirely before writing any code. Hackathon MVP — ruthless scope discipline required.
+> Read this entirely before writing any code. Production-grade discipline required — scope creep kills quality.
 
 ---
 
@@ -25,7 +25,7 @@ leadsync/
 │   ├── pr_review_crew.py    # Workflow 4 wrapper
 │   ├── memory_store.py      # SQLite memory facade
 │   ├── jira_history.py      # Same-label ticket context facade
-│   ├── prefs.py             # Google Docs preference loading facade
+│   ├── prefs.py             # Local-file preference loading facade
 │   ├── workflow1/           # Ticket Enrichment internals
 │   ├── workflow2/           # End-of-Day Digest internals
 │   ├── workflow3/           # Slack Q&A internals
@@ -34,12 +34,11 @@ leadsync/
 │   ├── memory/              # SQLite schema, read/write/query
 │   ├── integrations/        # Composio provider wrapper
 │   └── tools/               # Jira tool builder
-├── templates/
+├── config/
+│   ├── tech-lead-context.md
 │   ├── backend-ruleset.md
 │   ├── frontend-ruleset.md
-│   └── db-ruleset.md
-├── config/
-│   └── tech-lead-context.md
+│   └── database-ruleset.md
 ├── tests/
 ├── requirements.txt
 └── .env
@@ -68,7 +67,7 @@ Workflow 1 output is **one file only**: `prompt-[ticket-key].md`. It contains Ta
 
 ### Agents
 - Max 3 agents per crew. No exceptions.
-- `verbose=True` on every agent and crew — logs are the demo.
+- `verbose=True` on every agent and crew — logs are the observability layer.
 - Only give each agent the tools it needs. Reasoner agents get no tools.
 - LLM via env var `LEADSYNC_GEMINI_MODEL`. Default constant: `gemini/gemini-2.5-flash`. Never hardcode beyond the default.
 
@@ -77,12 +76,12 @@ Workflow 1 output is **one file only**: `prompt-[ticket-key].md`. It contains Ta
 - Use `Composio(provider=CrewAIProvider())` + `composio.tools.get(user_id=..., toolkits=[...])`.
 - See `src/shared.py:build_tools` for the reference implementation.
 - ❌ Do NOT use `ComposioToolSet` or `toolset.get_tools(actions=[...])` — different pattern, not used here.
-- `COMPOSIO_USER_ID` from env (default: `"default"`). Only toolkits: `JIRA`, `GITHUB`, `SLACK`.
+- `COMPOSIO_USER_ID` from env (default: `"default"`). Only toolkits: `JIRA`, `GITHUB`, `SLACK`. No Google Docs toolkit.
 
-### Templates & Config
-- Load rulesets at runtime from `templates/`. Select by ticket label.
+### Config
+- Load rulesets at runtime from `config/`. Select by ticket label (`backend-ruleset.md`, `frontend-ruleset.md`, `database-ruleset.md`).
 - Load tech lead context at runtime from `config/tech-lead-context.md`.
-- Never hardcode template content inline in agent prompts.
+- Never hardcode ruleset content inline in agent prompts. Edit the files in `config/` directly.
 
 ### Shared Utilities
 - `src/shared.py` exports: `_required_env()`, `build_llm()`, `build_tools()`, `CrewRunResult`, `memory_enabled()`, `build_memory_db_path()`.
@@ -121,9 +120,6 @@ Workflow 1 output is **one file only**: `prompt-[ticket-key].md`. It contains Ta
 | `LEADSYNC_MEMORY_DB_PATH` | No | `data/leadsync.db` |
 | `LEADSYNC_DIGEST_WINDOW_MINUTES` | No | `60` |
 | `LEADSYNC_TRIGGER_TOKEN` | No (WF2 security) | — |
-| `LEADSYNC_FRONTEND_PREFS_DOC_ID` | Yes (WF1+3 prefs) | — |
-| `LEADSYNC_BACKEND_PREFS_DOC_ID` | Yes (WF1+3 prefs) | — |
-| `LEADSYNC_DATABASE_PREFS_DOC_ID` | Yes (WF1+3 prefs) | — |
 
 `_required_env(name)` in `shared.py` raises `RuntimeError` with a clear message when a required var is absent.
 
@@ -133,7 +129,7 @@ Workflow 1 output is **one file only**: `prompt-[ticket-key].md`. It contains Ta
 
 - Wrap every `crew.kickoff()` in try/except. Log before re-raising.
 - If model name contains `-latest` and error contains `NOT_FOUND`: retry with `-latest` stripped.
-- Never silently swallow errors — readable logs are part of the demo.
+- Never silently swallow errors — readable logs are essential for debugging.
 
 ---
 
@@ -175,7 +171,7 @@ Workflow 1 output is **one file only**: `prompt-[ticket-key].md`. It contains Ta
 
 ---
 
-## 10. What's Cut — Do Not Re-Add
+## 10. Out of Scope — Do Not Add
 
 - ❌ Two output files per ticket — one `prompt-[ticket-key].md` only
 - ❌ PR review/approval automation — WF4 enriches descriptions only, does not approve or merge
@@ -183,6 +179,6 @@ Workflow 1 output is **one file only**: `prompt-[ticket-key].md`. It contains Ta
 - ❌ External managed database — local SQLite memory only
 - ❌ More than 3 agents per crew
 - ❌ One mega-crew for multiple workflows
-- ❌ Any toolkit besides `JIRA`, `GITHUB`, `SLACK`, `GOOGLEDOCS`
+- ❌ Any toolkit besides `JIRA`, `GITHUB`, `SLACK`
 
 Only build features explicitly described in these instructions.
