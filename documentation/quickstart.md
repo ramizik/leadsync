@@ -95,7 +95,7 @@ curl -X POST http://127.0.0.1:8000/slack/commands \
   --data-urlencode "channel_id=C12345678"
 ```
 
-## 5. Railway Hourly Scheduler (Hackathon)
+## 5. Railway Hourly Scheduler
 
 1. Create a dedicated Slack channel for digest output (example: `#leadsync-hourly-digest`).
 2. Invite your LeadSync Slack bot/app to that channel.
